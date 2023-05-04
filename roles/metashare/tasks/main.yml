@@ -176,6 +176,8 @@
   set_fact:
     dow: "{{ date_output.stdout }}"
   tags: restore_backup
+  delegate_to: localhost
+  become: no
 
 - name: Install backup/restore script
   template:
@@ -190,6 +192,7 @@
   register: backup
   delegate_to: localhost
   tags: restore_backup
+  become: no
 
 - name: Copy backup (if present)
   copy:

@@ -1,0 +1,88 @@
+---
+
+- name: Install needed packages
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3
+    - python36-lxml
+
+# This downloads far too much:
+- name: Download Kielipankki-palvelut
+  git:
+    repo: "https://github.com/CSCfi/Kielipankki-palvelut.git"
+    dest: "{{ src_dir }}"
+    version: master
+    force: yes
+    accept_hostkey: yes
+
+- name: Create directories
+  file:
+    path: "{{ item }}"
+    owner: "{{ remote_deploy_user }}"
+    group: "{{ remote_deploy_group }}"
+    state: directory
+  loop:
+    - "{{ cgi_dir }}"
+    - "{{ syncmeta_home }}"
+    - "{{ syncmeta_datadir }}"
+
+- name: Install syncmeta
+  synchronize:
+    src: "{{syncmeta_src}}/{{ item }}"
+    dest: "{{ syncmeta_home }}"
+  loop:
+    - xsl
+    - xsd
+    - syncmeta
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Copy schema.sql
+  template:
+    src: schema.sql.j2
+    dest: "{{ oai_pmh_sql_schema }}"
+
+- name: Initialize database
+  shell:
+    cmd: sqlite3 "{{ syncmeta_datadir }}/current" < "{{ oai_pmh_sql_schema }}"
+    creates: "{{ syncmeta_datadir }}/current"
+    
+- name: Install syncmetaconf.py
+  template:
+    src: syncmetaconf.py.j2
+    dest: "{{ syncmeta_home }}/syncmetaconf.py"
+  become_user:  "{{ remote_deploy_user }}"
+
+- name: Setup cronjobs
+  template:
+    src: cron_syncmeta.j2
+    dest: "/etc/{{ item }}"
+    mode: 0755
+  loop:
+    - "cron.daily/syncmeta_daily"
+    - "cron.weekly/syncmeta_weekly_check"
+
+# Install the actual oai-pmh interface "que"
+- name: Install que
+  copy:
+    src: "{{syncmeta_src}}/cgi/que"
+    dest: "{{ cgi_dir }}"
+    mode: 0755
+    remote_src: yes
+
+- name: Install queconf
+  template:
+    src: queconf.py.j2
+    dest: "{{ cgi_dir }}/queconf.py"
+
+- name: Setup Apache
+  template:
+    src: apache_syncmeta.conf.j2
+    dest: /etc/httpd/conf.d/00_syncmeta.conf
+  notify:
+    - restart httpd
+
+
+
+

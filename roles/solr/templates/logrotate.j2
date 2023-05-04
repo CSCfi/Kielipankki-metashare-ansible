@@ -1,0 +1,12 @@
+/opt/metashare/solr/solr.log {
+    rotate {{ solr_logrotate_keep }}
+    {{ solr_logrotate_frequency }}
+    missingok
+    notifempty
+    sharedscripts
+    delaycompress
+    postrotate
+        /bin/systemctl reload httpd.service > /dev/null 2>/dev/null || true
+        /bin/systemctl restart metashare > /dev/null 2>/dev/null || true
+    endscript
+}

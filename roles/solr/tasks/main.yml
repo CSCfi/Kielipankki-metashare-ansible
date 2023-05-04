@@ -1,0 +1,29 @@
+---
+
+- name: Install required packages
+  yum:
+    name:
+      - java-1.7.0-openjdk
+      - logrotate
+    state: installed
+
+- name: Download Solr
+  unarchive:
+    src: "{{ solr_url  }}"
+    dest: "{{ solr_home }}"
+    group: apache
+    owner: apache
+    remote_src: yes
+  when: false
+
+- name: Init Solr
+  shell:
+    cmd: 'bash -c "source {{ metashare_home }}/venv/bin/activate &&  ./create_solr_config.sh -n /usr/local/solr-{{ solr_version }}"'
+    chdir: "{{ metashare_home }}/misc/solr-config-sample/"
+  become_user: apache
+  when: false
+
+- name: Configure logrotate for solr logs
+  template:
+    src: "logrotate.j2"
+    dest: "/etc/logrotate.d/solr"

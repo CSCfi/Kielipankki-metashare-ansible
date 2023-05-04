@@ -1,0 +1,12 @@
+---
+- name: restart httpd
+  service:
+    name: httpd
+    state: restarted
+    enabled: yes
+
+- name: restart META-SHARE
+  service:
+    name: metashare
+    state: restarted
+    enabled: yes

@@ -1,0 +1,11 @@
+---
+
+# Add variables here to overwrite the default ones in 'all'
+# Passwords must be defined here
+
+#testing: true
+
+#Production Portal
+portal_ips:
+  - 86.50.31.191 # kielipankki1
+  - 86.50.31.213 # kielipankki2

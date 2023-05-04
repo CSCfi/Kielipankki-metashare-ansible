@@ -1,0 +1,24 @@
+---
+
+# backup dir
+backup_dir: /var/backup
+
+db_name: 'metasharev30'
+db_user: 'ling'
+db_install_password: '' # not used with postgres
+
+metashare_home: /opt/metashare
+db_password: "{{ lookup('passwordstore', 'lb_passwords/metashare/db_user') }}"
+
+ms_sync_users:
+  - tilde_syncuser341
+  - metalb_syncuser961
+
+remote_deploy_user: 'apache'
+remote_deploy_group: 'apache'
+
+script_url_location: /md_api
+cgi_dir: /var/www/cgi-bin/md_api/
+
+syncmeta_home: /var/www/syncmeta
+syncmeta_datadir: "{{ syncmeta_home }}/data"

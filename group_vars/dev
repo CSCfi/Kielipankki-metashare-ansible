@@ -1,0 +1,6 @@
+---
+
+# Add variables here to overwrite the default ones in 'all'
+# You should atleast overwrite passwords here, see dev
+testing: true # <- do not remove
+

@@ -1,0 +1,18 @@
+---
+oai_pmh_baseurl: "https://kielipankki.fi/md_api/que"
+oai_pmh_admin_email: "kielipankki@csc.fi"
+oai_pmh_sql_schema: "/tmp/oai_pmh_schema.sql"
+
+src_dir: /usr/local/src/Kielipankki-palvelut
+syncmeta_src: "{{ src_dir }}/servers/metalb/scripts/syncmeta/" 
+
+script_url_location: /md_api
+cgi_dir: /var/www/cgi-bin/md_api/
+syncmeta_home: /var/www/syncmeta
+syncmeta_datadir: "{{ syncmeta_home }}/data"
+
+syncmeta_admin_email: "metashare-errors@listat.csc.fi"
+kielipankki_admin_email: "ling-admin@listat.csc.fi"
+
+# Name of the sync_user, the password needs to be in the pass db
+sync_user: metalb_syncuser961

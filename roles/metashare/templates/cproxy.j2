@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+
+# script to make Metadata URNs conform to CLARIN requirements.
+
+import cgi
+import cgitb; cgitb.enable()  # for troubleshooting
+import sqlite3 as db
+import lxml.etree as etree
+import re
+import os
+
+# if "application/x-cmdi+xml" is requested, return CMDI XML, redirect to Metashare otherwise.
+
+form = cgi.FieldStorage()
+
+# For more documentation see:
+default_mdvalue="https://www.kielipankki.fi/development/cproxy/"
+
+metashare_url = form.getvalue("md", default_mdvalue)
+
+# force xml also via get when accept header is not set
+force_xml = form.getvalue("xml","")
+
+sqlitedb_location = "{{ syncmeta_datadir }}/current"
+
+http_accept_header = os.environ.get("HTTP_ACCEPT")
+
+
+# if no accept header is set, assume HTML.
+if http_accept_header:
+    return_cmdi_xml = ("application/x-cmdi+xml" in http_accept_header) or force_xml
+else:
+    return_cmdi_xml = 0
+
+
+# redirect to Metashare unless CMDI is explicitly requested. 
+if not return_cmdi_xml:
+    print ("Location:%s" % cgi.escape(metashare_url))
+    print
+else:
+
+# extract the Metashare storage ID from the URL.
+# tighly match, that should prevent misuse.
+    m_obj = re.search('^https?://metashare.csc.fi/repository/browse/[^/]+/([0-9a-f]+)/?$', metashare_url)
+
+    if m_obj: 
+        metashare_storage_id= m_obj.groups()[0]
+        try:
+            con = db.connect(sqlitedb_location)
+            cur = con.cursor()
+            cur.execute("SELECT sourceid, recno, metadataPrefix, metadata FROM origin NATURAL JOIN ix NATURAL JOIN record WHERE sourceid='"+ metashare_storage_id +"' AND metadataPrefix LIKE 'cmdi%'" )
+            
+            data = cur.fetchone()
+            if data:
+                xml = unicode(data[3])
+                print "Content-type: application/x-cmdi+xml"
+                print
+                print xml.replace(u'<metadata>',"").replace(u'</metadata>',"").encode('utf-8')
+            else:
+                print 'Status: 400 Bad Request'
+                print
+                print "Nothing found. Is the META-SHARE URL valid? Offending Metashare URL: %s" % metashare_url
+
+        except db.Error, e:
+            print 'Status: 400 Bad Request'
+            print
+            print "Error %s:" % e.args[0]
+            sys.exit(1)
+        finally:
+            if con:
+                con.close()
+                
+    else:
+        print 'Status: 400 Bad Request'
+        print
+        print "Error in processing. This should not happen, please contact kielipankki@csc.fi if the problem persists. Offending Metashare URL: %s" % metashare_url

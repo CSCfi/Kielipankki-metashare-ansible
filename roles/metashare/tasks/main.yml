@@ -1,0 +1,206 @@
+---
+
+- name: Install needed packages
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python-devel
+    - postgresql-devel
+
+- name: Download META-SHARE
+  git:
+    repo: "https://github.com/CSCfi/META-SHARE.git"
+    dest: "{{ metashare_home }}"
+    version: master
+    force: yes
+    accept_hostkey: yes
+
+- name: Set owner/permissions
+  file:
+    path: "{{ metashare_home }}"
+    owner: "{{ remote_deploy_user }}"
+    group:  "{{ remote_deploy_group }}"
+    recurse: yes
+
+- name: Create directories
+  file:
+    path:   "{{ item }}"
+    owner:  "{{ remote_deploy_user }}"
+    group:  "{{ remote_deploy_group }}"
+    state: directory
+  loop:
+    - "{{ metashare_logdir }}"
+    - "{{ cgi_dir }}"
+
+- name: Install MS dependencies
+  shell:
+    cmd: ./install-dependencies.sh
+    chdir: "{{ metashare_home }}"
+  become_user:  "{{ remote_deploy_user }}"
+
+  # Ensure CLARIN compatibility
+- name: Install cproxy
+  template:
+    src: cproxy.j2
+    dest: "{{ cgi_dir }}/cproxy"
+    mode: a+x
+
+- name: Install init script
+  template:
+    src: metashare_init.j2
+    dest: /etc/init.d/metashare
+    mode: 0755
+    owner: root
+    group: root
+  notify:
+    - restart META-SHARE
+
+- name: Install local_settings.py
+  template:
+    src: local_settings.py.j2
+    dest: "{{ metashare_home }}/metashare/local_settings.py"
+  become_user:  "{{ remote_deploy_user }}"
+
+- name: syncdb #note: might stall with admin question
+  shell:
+    cmd: bash -c "source venv/bin/activate && echo no | python manage.py syncdb"
+    chdir: "{{ metashare_home }}"
+  become_user:  "{{ remote_deploy_user }}"
+  loop:
+    - "syncdb"
+
+# Version 3.0.3 seems to have done something to static admin images.
+- name: Fix static admin images
+  file:
+    src: "{{ metashare_home }}/metashare/static/metashare/img/admin/{{ item }}"
+    dest: "{{ metashare_home }}/metashare/static/admin/img/{{ item }}"
+    state: link
+  loop:
+    - arrow-down.gif
+    - arrow-up.gif
+    - changelist-bg.gif
+    - changelist-bg_rtl.gif
+    - chooser-bg.gif
+    - chooser_stacked-bg.gif
+    - default-bg.gif
+    - default-bg-reverse.gif
+    - deleted-overlay.gif
+    - icon_addlink.gif
+    - icon_alert.gif
+    - icon_calendar.gif
+    - icon_changelink.gif
+    - icon_clock.gif
+    - icon_deletelink.gif
+    - icon_error.gif
+    - icon-no.gif
+    - icon_searchbox.png
+    - icon_success.gif
+    - icon-unknown.gif
+    - icon-yes.gif
+    - inline-delete-8bit.png
+    - inline-delete.png
+    - inline-restore-8bit.png
+    - inline-restore.png
+    - inline-splitter-bg.gif
+    - nav-bg.gif
+    - nav-bg-grabber.gif
+    - nav-bg-reverse.gif
+    - selector-addall.gif
+    - selector-add.gif
+    - selector-removeall.gif
+    - selector-remove.gif
+    - selector-search.gif
+    - selector_stacked-add.gif
+    - selector_stacked-remove.gif
+    - throbber_16.gif
+    - tool-left.gif
+    - tool-left_over.gif
+    - tool-right.gif
+    - tool-right_over.gif
+    - tooltag-add.gif
+    - tooltag-add_over.gif
+    - tooltag-arrowright.gif
+    - tooltag-arrowright_over.gif
+
+- name: Fix static admin files
+  file:
+    src: "{{ site_packages }}/django/contrib/admin/static/{{ item }}"
+    dest: "{{ metashare_home }}/metashare/static/{{ item }}"
+    state: link
+  loop:
+    - "admin/img/nav-bg-selected.gif"
+    - "admin/img/sorting-icons.gif"
+    - "admin/css/base.css"
+    - "admin/css/dashboard.css"
+    - "admin/css/changelists.css"
+    - "admin/css/ie.css"
+    - "admin/css/login.css"
+    - "admin/css/rtl.css"
+    - "admin/js/calendar.js"
+    - "admin/js/SelectBox.js"
+
+- name: fix static stats
+  file:
+    src: "../stats/static/stats/"
+    dest: "{{ metashare_home }}/metashare/static/stats"
+    state: link
+
+- name: fix static selectable
+  file:
+    src: "{{ site_packages }}/selectable/static/selectable"
+    dest: "{{ metashare_home }}/metashare/static/selectable"
+    state: link
+
+- name: Setup Apache
+  template:
+    src: metashare.conf.j2
+    dest: /etc/httpd/conf.d/metashare.conf
+  notify:
+    - restart httpd
+
+- name: Setup WSGI
+  template:
+    src: apache.wsgi.j2
+    dest: "{{ wsgi_conf }}"
+  notify:
+    - restart META-SHARE
+
+# A bit cumbersome to get an english day of week
+- name: Get day of week
+  shell: bash -c "LANG=en; date +%a"
+  register: date_output
+  tags: restore_backup
+
+- name: Set day of week
+  set_fact:
+    dow: "{{ date_output.stdout }}"
+  tags: restore_backup
+
+- name: Install backup/restore script
+  template:
+    src: backup.j2
+    dest: /usr/local/bin/backup.sh
+    mode: 700
+  tags: restore_backup
+
+- name: Check for backup file
+  stat:
+    path:  "{{ dow }}-{{ backup_filename }}.gz"
+  register: backup
+  delegate_to: localhost
+  tags: restore_backup
+
+- name: Copy backup (if present)
+  copy:
+    src: "{{ dow }}-{{ backup_filename }}.gz"
+    dest: "{{ backup_dir }}"
+  when: backup.stat.exists
+  tags: restore_backup
+
+- name: Apply backup
+  shell: /usr/local/bin/backup.sh restore "{{ db_install_password }}"
+#  no_log: true
+  when: backup.stat.exists
+  become: true
+  tags: restore_backup

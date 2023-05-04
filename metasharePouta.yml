@@ -1,0 +1,77 @@
+# You'll need to download and source your credentials before this will work:
+#  https://research.csc.fi/pouta-credentials
+#
+
+- name: Create virtual machine on cPouta
+  hosts: localhost # The OpenStack Shade modules run by Shade on your local machine.
+  vars:
+    pouta_instance_name: 'metashare'
+    vm_name_postfix: 'pre-prod'
+    std_image: "CentOS-7"
+    project_key: "kielipouta"
+    project_sg: "metashare-sg"
+    project_security_groups: "default,{{ project_sg }}" # don't add spaces here!
+
+    servers:
+      - name: "{{ pouta_instance_name }}-{{ vm_name_postfix }}"
+        image: "{{ std_image }}"
+        flavor: standard.small
+        key_name: "{{ project_key }}"
+        security_groups: "{{ project_security_groups }}"
+        meta:
+          group: default
+
+    security_group_rules:
+      - name: nagios
+        protocol: tcp
+        port: 5666
+        allowed_ips:
+          - "193.167.254.68/32" #opsview
+
+      - name: http
+        protocol: tcp
+        port: 80
+        allowed_ips:
+          - "0.0.0.0/0" # access from all
+
+      - name: ssh
+        protocol: tcp
+        port: 22
+        allowed_ips:
+          - "193.166.1.0/16" #CSC Office
+          - "193.166.2.0/16" #CSC Office
+          - "193.166.84.0/16" #CSC VPN
+          - "193.166.85.0/16" #CSC VPN
+          - "86.50.31.6/32"  #Korp2
+
+    
+  roles:
+    - role: ../all/roles/create_instances
+      tags: create_instances
+
+- name: Install META-SHARE
+  hosts: metashare-pre-prod
+  remote_user: cloud-user
+  become: yes  # sudo to root
+
+  roles:
+    - role: ../all/roles/backup
+      tags: backup
+    - role: ../all/roles/postfix
+      tags: postfix
+    - role: ../all/roles/opsview
+      tags: opsview
+    - role: apache
+      tags: apache
+    - role: postgresql
+      tags: postgresql
+    - role: metashare
+      tags: metashare
+    - role: solr
+      tags: solr
+    - role: syncmeta
+      tags: syncmeta
+    - role: firewall
+      tags: firewall
+
+

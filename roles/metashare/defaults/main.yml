@@ -1,0 +1,9 @@
+---
+metashare_home: /opt/metashare
+metashare_logdir: /var/log/metashare
+data_dir: "storage"
+wsgi_conf: "{{ metashare_home }}/metashare/apache.wsgi"
+site_packages: "{{ metashare_home }}/venv/lib/python2.7/site-packages"
+backup_filename: metashare_backup.tar
+tmp_dir: /var/tmp
+

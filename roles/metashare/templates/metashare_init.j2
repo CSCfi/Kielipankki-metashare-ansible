@@ -1,0 +1,47 @@
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides: metashare
+# Required-Start: $remote_fs $syslog
+# Required-Stop:  $remote_fs $syslog
+# X-UnitedLinux-Should-Start: slpd
+# Default-Start:  3 5
+# Default-Stop:   0 1 2 6
+# Description:    Start the metashare services
+### END INIT INFO
+
+case "$1" in
+    start)
+        echo  "Starting metashare services"
+        ## Start daemon with startproc(8). If this fails
+        ## the echo return value is set appropriate.
+
+        # NOTE: startproc return 0, even if service is 
+        # already running to match LSB spec.
+	sudo -u {{ remote_deploy_user }} {{ metashare_home }}/metashare/start-solr.sh
+        sudo -u {{ remote_deploy_user }} bash -c "source {{ metashare_home }}/venv/bin/activate &&  python2.7 {{ metashare_home }}/manage.py installtasks"
+        #make cron jobs shut up.
+        sudo -u apache bash -c "crontab -l | sed 's%$% 2> /dev/null%' | crontab -"
+
+        ;;
+    stop)
+        echo  "Shutting down all metashare services"
+        ## Stop daemon with killproc(8) and if this fails
+        ## set echo the echo return value.
+	sudo -u {{ remote_deploy_user }} {{ metashare_home }}/metashare/stop-solr.sh
+        sudo -u {{ remote_deploy_user }} bash -c "source {{ metashare_home }}/venv/bin/activate &&  python2.7 {{ metashare_home }}/manage.py uninstalltasks"
+        ;;
+    restart)
+        ## Stop the service and regardless of whether it was
+        ## running or not, start it again.
+        $0 stop
+        ## give solr time to stop --matthies 8/2015
+	sleep 3
+        $0 start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+

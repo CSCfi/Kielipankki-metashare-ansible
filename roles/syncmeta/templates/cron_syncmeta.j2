@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# This script syncs metashare content to a database read by the "que" script.
+# The error checking is stricter than in Metashare, possible XML validation errors
+# are reported.
+# It supports 2 modes: daily (sync) and weekly (full content check)
+
+# Day of week
+LANG=en
+DOW=`date +%a`
+
+# this fixes encoding issues in python
+export PYTHONIOENCODING=utf-8
+# location of syncmeta
+SYNCMETA_HOME="{{ syncmeta_home }}"
+  
+# Where to send mail.
+## Logs go to CSC and UHEL
+LOG_RECIPIENTS="{{ syncmeta_admin_email }}"
+## Errors only to CSC
+
+CRASHREPORT_RECIPIENTS="{{ kielipankki_admin_email }}"
+
+# The script has two modes: daily sync and weekly full check.
+if [[ $0 =~ "_daily" ]]; then
+    MODE="daily"
+    # the daily sync updates the database, reports errors, but only once.
+    SYNCMETA_OPTS="--validate 20"
+    LOG=/tmp/$DOW-syncmeta_$MODE.log
+    STDERR=/tmp/$DOW-syncmeta_${MODE}_stderr.txt
+else
+    MODE="weekly"
+    # The weekly check does not change the database but re-reports all presenly existing errors.
+    SYNCMETA_OPTS="--validate 20 --touch --dryrun"
+    LOG=/tmp/syncmeta_validate_$MODE.log
+    STDERR=/tmp/syncmeta_validate_${MODE}_stderr.txt
+fi
+
+# Run syncmeta
+cd $SYNCMETA_HOME
+./syncmeta $SYNCMETA_OPTS 2> $STDERR > $LOG 
+
+# If errors happened, mail logs
+if [ -s $STDERR ]; then
+  echo "See attached logs. Consider running syncmeta on server again with --verbose --touch --dryrun." |/bin/mail -a $LOG -a $STDERR -s "META-SHARE validation ($0) crashed on $HOSTNAME!" $CRASHREPORT_RECIPIENTS 
+else
+  if [ -s $LOG ]; then
+    echo "Problems have been found in META-SHARE records. Theses records are not exported to the VLO. See attached logs." |/bin/mail -a $LOG -s "META-SHARE validation failed." $LOG_RECIPIENTS
+  else
+    # confirm no problems in weekly mode, but not every day.
+    if [ $MODE == "weekly" ]; then
+    echo "This mail just confirms that the tests have been run successfully without finding any issues." |/bin/mail  -s "META-SHARE weekly check found no issues." $LOG_RECIPIENTS
+    fi
+  fi
+fi

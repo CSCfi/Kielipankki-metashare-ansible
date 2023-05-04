@@ -1,0 +1,84 @@
+---
+# This playbook will install Postgresql and create db user and give permissions.
+
+# Install
+
+- name: Install PSQL packages
+  yum: 
+    name:
+      - postgresql-server
+      - postgresql-contrib 
+      - python-psycopg2
+    state: present
+
+- name: Initialize the Database
+  command: /usr/bin/postgresql-setup initdb
+  args:
+    creates: /var/lib/pgsql/initdb.log
+    
+- name: Start PSQL Service
+  service: 
+    name: postgresql
+    state: started 
+    enabled: yes
+
+# Harden
+
+- name: Configure local access
+  lineinfile:
+    path: /var/lib/pgsql/data/pg_hba.conf
+    line: "{{ item }}"
+  loop:
+    - "host {{ db_name }} {{ db_user }} 127.0.0.1/32 md5"
+    - "host {{ db_name }} {{ db_user }} ::1/128      md5"
+  notify:
+    - restart postgres
+
+
+- name: Remove Ident lines
+  lineinfile:
+    path: /var/lib/pgsql/data/pg_hba.conf
+    regexp: "{{ item }}"
+    state: absent
+  loop:
+    - "^host.* ident *$"
+  notify:
+    - restart postgres
+
+- name: Restart PSQL Service (handler broken)
+  service: 
+    name: postgresql
+    state: restarted 
+    enabled: yes
+
+# Create DBs
+
+- name: Create database
+  postgresql_db:
+    name: "{{ db_name }}"
+    encoding: 'UTF-8'
+    template: 'template1'
+    state: present
+  become_user: postgres
+#  no_log: true
+
+- name: Ensure user has access to the database
+  postgresql_user:
+    db: "{{ db_name }}"
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    priv: "ALL"
+    state: present
+  become_user: postgres
+
+- name: Ensure user does not have unnecessary privileges
+  postgresql_user:
+    name: "{{ db_user }}"
+    role_attr_flags: "NOSUPERUSER,NOCREATEDB"
+    state: present
+  become_user: postgres
+  
+
+
+
+

@@ -1,0 +1,19 @@
+WSGIRestrictEmbedded On
+
+<VirtualHost *:80>
+ ServerAdmin ling-admin@listat.csc.fi
+ DocumentRoot "{{ metashare_home }}/metashare"
+ Alias /static/ "{{ metashare_home }}/metashare/static/"
+ Alias /favicon.ico "{{ metashare_home }}/metashare/static/metashare/images/favicon.ico"
+
+ <Directory "{{ metashare_home }}/metashare/static/">
+        Require all granted
+ </Directory>
+ <Directory "{{ metashare_home }}/metashare">
+        Require all granted
+ </Directory>
+
+ WSGIDaemonProcess metashare processes=2 threads=3 display-name=%{GROUP} python-home={{ metashare_home }}/venv python-path={{ metashare_home }}
+ WSGIProcessGroup metashare
+ WSGIScriptAlias / {{ wsgi_conf }}
+</VirtualHost>

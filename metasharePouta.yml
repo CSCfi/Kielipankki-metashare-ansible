@@ -46,7 +46,7 @@
 
     
   roles:
-    - role: ../all/roles/create_instances
+    - role: kielipankki.common.create_instances
       tags: create_instances
 
 - name: Install META-SHARE
@@ -55,11 +55,11 @@
   become: yes  # sudo to root
 
   roles:
-    - role: ../all/roles/backup
+    - role: kielipankki.common.backup
       tags: backup
-    - role: ../all/roles/postfix
+    - role: kielipankki.common.postfix
       tags: postfix
-    - role: ../all/roles/opsview
+    - role: kielipankki.common.opsview
       tags: opsview
     - role: apache
       tags: apache

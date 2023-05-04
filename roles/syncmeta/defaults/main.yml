@@ -3,8 +3,7 @@ oai_pmh_baseurl: "https://kielipankki.fi/md_api/que"
 oai_pmh_admin_email: "kielipankki@csc.fi"
 oai_pmh_sql_schema: "/tmp/oai_pmh_schema.sql"
 
-src_dir: /usr/local/src/Kielipankki-palvelut
-syncmeta_src: "{{ src_dir }}/servers/metalb/scripts/syncmeta/" 
+syncmeta_src: "src" #relative to files
 
 script_url_location: /md_api
 cgi_dir: /var/www/cgi-bin/md_api/

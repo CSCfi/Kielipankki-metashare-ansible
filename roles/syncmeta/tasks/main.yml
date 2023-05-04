@@ -8,15 +8,6 @@
     - python3
     - python36-lxml
 
-# This downloads far too much:
-- name: Download Kielipankki-palvelut
-  git:
-    repo: "https://github.com/CSCfi/Kielipankki-palvelut.git"
-    dest: "{{ src_dir }}"
-    version: master
-    force: yes
-    accept_hostkey: yes
-
 - name: Create directories
   file:
     path: "{{ item }}"
@@ -29,14 +20,13 @@
     - "{{ syncmeta_datadir }}"
 
 - name: Install syncmeta
-  synchronize:
+  copy:
     src: "{{syncmeta_src}}/{{ item }}"
     dest: "{{ syncmeta_home }}"
   loop:
     - xsl
     - xsd
     - syncmeta
-  delegate_to: "{{ inventory_hostname }}"
 
 - name: Copy schema.sql
   template:
@@ -69,7 +59,6 @@
     src: "{{syncmeta_src}}/cgi/que"
     dest: "{{ cgi_dir }}"
     mode: 0755
-    remote_src: yes
 
 - name: Install queconf
   template:

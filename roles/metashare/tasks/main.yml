@@ -40,6 +40,7 @@
   become_user:  "{{ remote_deploy_user }}"
 
   # Ensure CLARIN compatibility
+  # FIXME: Should this be moved to roles/syncmeta? --mma 4.5.2023
 - name: Install cproxy
   template:
     src: cproxy.j2

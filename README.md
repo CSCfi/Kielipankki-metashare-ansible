@@ -8,23 +8,31 @@ The  main differences to stock META-SHARE:
  * ID used as PID, URL used as Access Location
  * GeoIP DB download fixed
  * backup/restore script
- 
+
 # Prerequisites
 
-For Ansible/Openstack see ../portal/README.md
+ * [Pouta OpenStack RC file]((https://docs.csc.fi/cloud/pouta/install-client/#configure-your-terminal-environment-for-openstack)
+ * Ansible packages from requirements.yml (`ansible-galaxy install -r requirements.yml`)
+ * Python requirements from requirements.txt
+```
+virtualenv .venv -p python3
+source .venv/bin/activate
+pip install -r requirements_dev.txt
+```
+
+
+# Installation
+
 To recreate the server using a backup:
  * on the prodcution server run ```backup.sh backup```
  * copy  ```/var/backup/(day of week)-metashare_backup.tar.gz``` to this folder.
 If the backup file is missing, the server will be created without content.
- 
-# Installation
 
 Run
 
-``` ansible-playbook metasharePouta.yml``` 
+``` ansible-playbook metasharePouta.yml```
 
 This should create the VM, install all dependencies and apply the backup.
-To only apply the backup run 
+To only apply the backup run
 
-``` ansible-playbook metasharePouta.yml -t restore_backup``` 
-
+``` ansible-playbook metasharePouta.yml -t restore_backup```

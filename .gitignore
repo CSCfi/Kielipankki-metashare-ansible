@@ -71,5 +71,9 @@ wp-uploads.zip
 
 # Vim temp files
 *.sw?
+
 FIN-CLARIN-Administration/~$KP_Licenses.xlsx
 FIN-CLARIN-Administration/~$New_resource.xlsx
+
+# Backups
+*-metashare_backup.tar.gz

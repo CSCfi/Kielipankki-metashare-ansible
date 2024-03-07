@@ -1,0 +1,7 @@
+---
+metax_api_token: {{ lookup('passwordstore', 'lb_passwords/metax/metax_v3_api_token') }}
+metax_base_url: https://metax.fd-rework.csc.fi/v3
+metax_catalog_id: urn:nbn:fi:att:data-catalog-kielipankki
+
+harvester_log_file: {{ harvester_log_file }}
+metax_api_log_file: {{ metax_api_log_file }}

@@ -1,0 +1,32 @@
+---
+
+- name: Clone Metashare-Metax bridge repo
+  ansible.builtin.git:
+    repo: https://github.com/CSCfi/Kielipankki-Metax-bridge.git
+    dest: "{{ bridge_installation_dir }}"
+    version: "{{ bridge_version }}"
+
+- name: Create log directory
+  ansible.builtin.file:
+    path: "{{ bridge_log_dir }}"
+    state: directory
+    recurse: true
+
+- name: Configure the bridge
+  ansible.builtin.template:
+    dest: "{{ bridge_config_file }}"
+    src: config.yml.j2
+
+- name: Install Python 3.6
+  ansible.builtin.yum:
+    name: "{{ item }}"
+    state: installed
+  loop:
+    - python3  # defaults to 3.6 on CentOS7, needs to be changed when updating
+    - python36-virtualenv
+
+- name: Create virtualenv for Metax bridge
+  ansible.builtin.pip:
+    virtualenv: "{{ bridge_installation_dir }}/.venv"
+    virtualenv_command: python3.6 -m virtualenv
+    requirements: "{{ bridge_installation_dir }}/requirements.txt"

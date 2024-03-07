@@ -23,6 +23,7 @@
   copy:
     src: "{{syncmeta_src}}/{{ item }}"
     dest: "{{ syncmeta_home }}"
+    mode: 0755
   loop:
     - xsl
     - xsd

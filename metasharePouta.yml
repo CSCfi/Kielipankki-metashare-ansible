@@ -73,3 +73,5 @@
       tags: syncmeta
     - role: firewall
       tags: firewall
+    - role: metax_bridge
+      tags: metax_bridge

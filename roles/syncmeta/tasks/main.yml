@@ -37,12 +37,12 @@
   shell:
     cmd: sqlite3 "{{ syncmeta_datadir }}/current" < "{{ oai_pmh_sql_schema }}"
     creates: "{{ syncmeta_datadir }}/current"
-    
+
 - name: Install syncmetaconf.py
   template:
     src: syncmetaconf.py.j2
     dest: "{{ syncmeta_home }}/syncmetaconf.py"
-  become_user:  "{{ remote_deploy_user }}"
+  become_user: "{{ remote_deploy_user }}"
 
 - name: Setup cronjobs
   template:
@@ -71,7 +71,3 @@
     dest: /etc/httpd/conf.d/00_syncmeta.conf
   notify:
     - restart httpd
-
-
-
-

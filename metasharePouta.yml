@@ -44,7 +44,7 @@
           - "193.166.85.0/16" #CSC VPN
           - "86.50.31.6/32"  #Korp2
 
-    
+
   roles:
     - role: kielipankki.common.create_instances
       tags: create_instances
@@ -73,5 +73,3 @@
       tags: syncmeta
     - role: firewall
       tags: firewall
-
-

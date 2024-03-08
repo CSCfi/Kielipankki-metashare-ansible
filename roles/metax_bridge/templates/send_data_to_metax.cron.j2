@@ -1,0 +1,4 @@
+#!/bin/bash
+
+source {{ bridge_virtualenv_dir }}/bin/activate
+python {{ bridge_installation_dir }}/metadata_harvester_cli.py {{ bridge_config_file }}

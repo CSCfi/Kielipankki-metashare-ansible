@@ -3,6 +3,7 @@ bridge_version: main
 
 bridge_installation_dir: /opt/metax-bridge
 bridge_config_file: "{{ bridge_installation_dir }}/config/config.yml"
+bridge_virtualenv_dir: "{{ bridge_installation_dir }}/.venv"
 
 bridge_log_dir: /var/log/metax_bridge
 harvester_log_file: "{{ bridge_log_dir }}/harvester.log"

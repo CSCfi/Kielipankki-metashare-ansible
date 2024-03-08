@@ -27,6 +27,13 @@
 
 - name: Create virtualenv for Metax bridge
   ansible.builtin.pip:
-    virtualenv: "{{ bridge_installation_dir }}/.venv"
+    virtualenv: "{{ bridge_virtualenv_dir }}"
     virtualenv_command: python3.6 -m virtualenv
     requirements: "{{ bridge_installation_dir }}/requirements.txt"
+
+
+- name: Setup cronjob for regular harvesting
+  ansible.builtin.template:
+    dest: /etc/cron.daily/send_data_to_metax.cron
+    src: send_data_to_metax.cron.j2
+    mode: 0744

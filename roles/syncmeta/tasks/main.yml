@@ -6,7 +6,8 @@
     state: present
   loop:
     - python3
-    - python36-lxml
+    - python3-lxml
+    - sqlite
 
 - name: Create directories
   file:

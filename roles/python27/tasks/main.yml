@@ -1,0 +1,83 @@
+---
+
+- name: Install required packages
+  yum:
+    name:
+      - zlib-devel
+      - tk-devel
+      - tcl-devel
+    state: present
+
+- name: Fetch older openssl tarball
+  ansible.builtin.get_url:
+    url: https://ftp.openssl.org/source/old/1.0.2/openssl-1.0.2d.tar.gz
+    dest: "{{ tmp_dir }}"
+
+- name: Decompress older openssl tarball
+  ansible.builtin.unarchive:
+    src: "{{ tmp_dir }}/openssl-1.0.2d.tar.gz"
+    dest: "{{ tmp_dir }}"
+    remote_src: true
+
+- name: Configure older openssl
+  ansible.builtin.command:
+    chdir: "{{ tmp_dir }}/openssl-1.0.2d"
+    cmd: ./config shared
+    creates: "{{ tmp_dir }}/openssl-1.0.2d/config.log"
+  become: true
+
+- name: Make older openssl
+  ansible.builtin.make:
+    chdir: "{{ tmp_dir }}/openssl-1.0.2d"
+
+- name: install older openssl
+  ansible.builtin.make:
+    chdir: "{{ tmp_dir }}/openssl-1.0.2d"
+    target: install
+  become: true
+
+- name: ldconfig older openssl
+  ansible.builtin.command:
+    cmd: ldconfig /usr/local/ssl/lib
+  become: true
+
+- name: Get Python 2.7 source tarball
+  ansible.builtin.get_url:
+    url: https://www.python.org/ftp/python/2.7.9/Python-2.7.9.tgz
+    dest: "{{ tmp_dir }}"
+
+- name: Decompress Python 2.7 source tarball
+  ansible.builtin.unarchive:
+    src: "{{ tmp_dir }}/Python-2.7.9.tgz"
+    dest: "{{ tmp_dir }}"
+    remote_src: true
+
+- name: Configure Python 2.7
+  ansible.builtin.shell:
+    chdir: "{{ tmp_dir }}/Python-2.7.9"
+    cmd: ./configure --prefix=/usr/local --enable-shared --with-ensurepip=install
+    creates: "{{ tmp_dir_python27 }}/config.log"
+
+- name: Make Python 2.7
+  ansible.builtin.make:
+    chdir: "{{ tmp_dir_python27 }}"
+
+- name: Install Python 2.7
+  ansible.builtin.make:
+    chdir: "{{ tmp_dir_python27 }}"
+    target: altinstall
+  become: true
+
+- name: Add Python 2.7 libs to ldconfig
+  ansible.builtin.lineinfile:
+    line: "{{ item }}"
+    dest: /etc/ld.so.conf
+  loop:
+    - /usr/local/lib
+    - /usr/local/bin/python2.7
+  become: true
+
+- name: Run ldconfig
+  ansible.builtin.command:
+    cmd: ldconfig
+  become: true

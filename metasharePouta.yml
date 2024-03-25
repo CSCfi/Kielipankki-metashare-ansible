@@ -4,10 +4,11 @@
 
 - name: Create virtual machine on cPouta
   hosts: localhost # The OpenStack Shade modules run by Shade on your local machine.
+  remote_user: almalinux
   vars:
     pouta_instance_name: 'metashare'
     vm_name_postfix: 'pre-prod'
-    std_image: "CentOS-7"
+    std_image: "AlmaLinux-9"
     project_key: "kielipouta"
     project_sg: "metashare-sg"
     project_security_groups: "default,{{ project_sg }}" # don't add spaces here!
@@ -51,7 +52,6 @@
 
 - name: Install META-SHARE
   hosts: metashare-pre-prod
-  remote_user: cloud-user
   become: yes  # sudo to root
 
   roles:
@@ -61,6 +61,8 @@
       tags: postfix
     - role: kielipankki.common.opsview
       tags: opsview
+    - role: python27
+      tags: python27
     - role: apache
       tags: apache
     - role: postgresql

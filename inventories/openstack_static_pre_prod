@@ -1,3 +1,10 @@
-# Static IP settings for generated CPouta VMs. Needs to be adjusted if the IP pool changes.
-[metashare-pre-prod]
-metashare-pre-prod ansible-host=86.50.230.109 ansible_user=cloud-user
+all:
+  hosts:
+    localhost:
+      ansible_connection: local
+      floating_ip: 128.214.255.214
+      vm_name_postfix: almatest
+      ansible_python_interpreter: python
+    metashare-pre-prod:
+      ansible_host: 128.214.255.214
+      ansible_user: almalinux

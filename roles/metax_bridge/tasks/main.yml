@@ -22,13 +22,13 @@
     name: "{{ item }}"
     state: installed
   loop:
-    - python3  # defaults to 3.6 on CentOS7, needs to be changed when updating
-    - python36-virtualenv
+    - python3
+    - python3-virtualenv
 
 - name: Create virtualenv for Metax bridge
   ansible.builtin.pip:
     virtualenv: "{{ bridge_virtualenv_dir }}"
-    virtualenv_command: python3.6 -m virtualenv
+    virtualenv_command: python3 -m virtualenv
     requirements: "{{ bridge_installation_dir }}/requirements.txt"
 
 

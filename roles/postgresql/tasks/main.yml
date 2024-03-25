@@ -4,22 +4,22 @@
 # Install
 
 - name: Install PSQL packages
-  yum: 
+  yum:
     name:
       - postgresql-server
-      - postgresql-contrib 
+      - postgresql-contrib
       - python-psycopg2
     state: present
 
 - name: Initialize the Database
   command: /usr/bin/postgresql-setup initdb
   args:
-    creates: /var/lib/pgsql/initdb.log
-    
+    creates: /var/lib/pgsql/initdb_postgresql.log
+
 - name: Start PSQL Service
-  service: 
+  service:
     name: postgresql
-    state: started 
+    state: started
     enabled: yes
 
 # Harden
@@ -46,9 +46,9 @@
     - restart postgres
 
 - name: Restart PSQL Service (handler broken)
-  service: 
+  service:
     name: postgresql
-    state: restarted 
+    state: restarted
     enabled: yes
 
 # Create DBs
@@ -77,8 +77,4 @@
     role_attr_flags: "NOSUPERUSER,NOCREATEDB"
     state: present
   become_user: postgres
-  
-
-
-
 

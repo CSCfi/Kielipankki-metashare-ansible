@@ -7,6 +7,12 @@
   loop:
     - python-devel
     - postgresql-devel
+    - git
+#    - wget
+
+- name: Prevent git worrying about apache owning the metashare dir
+  ansible.builtin.command:
+    cmd: "git config --global --add safe.directory {{ metashare_home }}"
 
 - name: Download META-SHARE
   git:
@@ -20,24 +26,56 @@
   file:
     path: "{{ metashare_home }}"
     owner: "{{ remote_deploy_user }}"
-    group:  "{{ remote_deploy_group }}"
+    group: "{{ remote_deploy_group }}"
     recurse: yes
 
 - name: Create directories
   file:
-    path:   "{{ item }}"
-    owner:  "{{ remote_deploy_user }}"
-    group:  "{{ remote_deploy_group }}"
+    path: "{{ item }}"
+    owner: "{{ remote_deploy_user }}"
+    group: "{{ remote_deploy_group }}"
     state: directory
   loop:
     - "{{ metashare_logdir }}"
     - "{{ cgi_dir }}"
 
-- name: Install MS dependencies
-  shell:
-    cmd: ./install-dependencies.sh
+- name: Fetch virtualenv tarball
+  ansible.builtin.get_url:
+    url: https://pypi.python.org/packages/source/v/virtualenv/virtualenv-12.0.7.tar.gz
+    dest: "{{ tmp_dir }}"
+    checksum: md5:e08796f79d112f3bfa6653cc10840114
+
+- name: Decompress virtualenv tarball
+  ansible.builtin.unarchive:
+    src: "{{ tmp_dir }}/virtualenv-12.0.7.tar.gz"
+    dest: "{{ tmp_dir }}"
+    remote_src: true
+
+- name: Create virtualenv
+  ansible.builtin.command:
+    cmd: "/usr/local/bin/python2.7 virtualenv.py {{ metashare_home }}/venv"
+    chdir: "{{ tmp_dir }}/virtualenv-12.0.7"
+  environment:
+    - LD_LIBRARY_PATH: /usr/local/ssl/lib/
+  become: true
+
+- name: Install required Python packages to virtualenv
+  ansible.builtin.shell:
+    cmd: source venv/bin/activate; pip install -r requirements.txt
     chdir: "{{ metashare_home }}"
-  become_user:  "{{ remote_deploy_user }}"
+  environment:
+    - LD_LIBRARY_PATH: /usr/local/ssl/lib/
+
+- name: Cleanup Python 2.7 tmpdir
+  ansible.builtin.file:
+    path: "{{ tmp_dir }}"
+    state: absent
+
+#- name: Install MS dependencies
+#  shell:
+#    cmd: ./install-dependencies.sh
+#    chdir: "{{ metashare_home }}"
+#  become_user: "{{ remote_deploy_user }}"
 
   # Ensure CLARIN compatibility
   # FIXME: Should this be moved to roles/syncmeta? --mma 4.5.2023
@@ -61,13 +99,17 @@
   template:
     src: local_settings.py.j2
     dest: "{{ metashare_home }}/metashare/local_settings.py"
-  become_user:  "{{ remote_deploy_user }}"
+  become_user: "{{ remote_deploy_user }}"
+  environment:
+    - LD_LIBRARY_PATH: /usr/local/ssl/lib/
 
 - name: syncdb #note: might stall with admin question
   shell:
     cmd: bash -c "source venv/bin/activate && echo no | python manage.py syncdb"
     chdir: "{{ metashare_home }}"
   become_user:  "{{ remote_deploy_user }}"
+  environment:
+    - LD_LIBRARY_PATH: /usr/local/ssl/lib/
   loop:
     - "syncdb"
 
@@ -189,7 +231,7 @@
 
 - name: Check for backup file
   stat:
-    path:  "{{ dow }}-{{ backup_filename }}.gz"
+    path: "{{ dow }}-{{ backup_filename }}.gz"
   register: backup
   delegate_to: localhost
   tags: restore_backup

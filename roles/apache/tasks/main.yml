@@ -3,28 +3,56 @@
 
 
 - name: Install httpd
-  yum: 
+  yum:
     name:
       - httpd
+      - httpd-devel
       - unzip
-      - mod_wsgi
+#      - mod_wsgi
     state: present
 
+- name: Get mod_wsgi sources
+  ansible.builtin.get_url:
+    url: https://github.com/GrahamDumpleton/mod_wsgi/archive/refs/tags/4.7.1.tar.gz
+    dest: "{{ tmp_dir }}"
+
+- name: Extract mod_wsgi sources
+  ansible.builtin.unarchive:
+    src: "{{ tmp_dir }}/mod_wsgi-4.7.1.tar.gz"
+    dest: "{{ tmp_dir }}"
+    remote_src: true
+
+- name: Configure mod_wsgi to use Python 2.7
+  ansible.builtin.command:
+    cmd: ./configure --with-python=/usr/local/bin/python2.7
+    chdir: "{{ tmp_dir }}/mod_wsgi-4.7.1"
+    creates: "{{ tmp_dir }}/mod_wsgi-4.7.1/config.log"
+
+- name: Make mod_wsgi
+  ansible.builtin.command:
+    cmd: make
+    chdir: "{{ tmp_dir }}/mod_wsgi-4.7.1"
+
+- name: Install mod_wsgi
+  ansible.builtin.command:
+    cmd: make install
+    chdir: "{{ tmp_dir }}/mod_wsgi-4.7.1"
+  become: true
+
 - name: copy httpd.conf
-  copy: 
+  copy:
     src: "{{ role_path }}/files/httpd/conf/"
     dest: /etc/httpd/conf/
   notify: restart httpd
 
 - name: Move conf.d files
-  copy: 
+  copy:
     src: "{{ role_path }}/files/httpd/conf.d/"
     dest: /etc/httpd/conf.d/
   notify: restart httpd
 
 - name: http service state
-  service: 
-    name: httpd 
-    state: started 
+  service:
+    name: httpd
+    state: started
     enabled: yes
-

@@ -36,9 +36,15 @@
     target: install
   become: true
 
-- name: ldconfig older openssl
+- name: Add older openssl libraries
+  ansible.builtin.lineinfile:
+    line: /usr/local/ssl/lib
+    dest: /etc/ld.so.conf
+  become: true
+
+- name: Run ldconfig
   ansible.builtin.command:
-    cmd: ldconfig /usr/local/ssl/lib
+    cmd: ldconfig
   become: true
 
 - name: Get Python 2.7 source tarball

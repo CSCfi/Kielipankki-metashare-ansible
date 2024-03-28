@@ -55,16 +55,12 @@
   ansible.builtin.command:
     cmd: "/usr/local/bin/python2.7 virtualenv.py {{ metashare_home }}/venv"
     chdir: "{{ tmp_dir }}/virtualenv-12.0.7"
-  environment:
-    - LD_LIBRARY_PATH: /usr/local/ssl/lib/
   become: true
 
 - name: Install required Python packages to virtualenv
   ansible.builtin.shell:
     cmd: source venv/bin/activate; pip install -r requirements.txt
     chdir: "{{ metashare_home }}"
-  environment:
-    - LD_LIBRARY_PATH: /usr/local/ssl/lib/
 
 - name: Cleanup Python 2.7 tmpdir
   ansible.builtin.file:
@@ -100,16 +96,12 @@
     src: local_settings.py.j2
     dest: "{{ metashare_home }}/metashare/local_settings.py"
   become_user: "{{ remote_deploy_user }}"
-  environment:
-    - LD_LIBRARY_PATH: /usr/local/ssl/lib/
 
 - name: syncdb #note: might stall with admin question
   shell:
     cmd: bash -c "source venv/bin/activate && echo no | python manage.py syncdb"
     chdir: "{{ metashare_home }}"
   become_user:  "{{ remote_deploy_user }}"
-  environment:
-    - LD_LIBRARY_PATH: /usr/local/ssl/lib/
   loop:
     - "syncdb"
 

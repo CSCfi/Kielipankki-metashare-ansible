@@ -17,7 +17,8 @@ WSGIRestrictEmbedded On
 
 # WSGIDaemonProcess metashare processes=2 threads=3 display-name=%{GROUP} virtualenv={{ metashare_home }}/venv python-path={{ metashare_home }}
 # WSGIDaemonProcess metashare processes=2 threads=3 display-name=%{GROUP} python-home={{ metashare_home }}
- WSGIDaemonProcess metashare processes=2 threads=3 display-name=%{GROUP} python-path={{ metashare_home }}:{{ metashare_home }}/venv/lib/python2.7/site-packages
+# WSGIDaemonProcess metashare processes=2 threads=3 display-name=%{GROUP} python-path={{ metashare_home }}:{{ metashare_home }}/venv/lib/python2.7/site-packages
+  WSGIDaemonProcess metashare processes=2 threads=3 display-name=%{GROUP} python-home={{ metashare_home }}/venv
  WSGIProcessGroup metashare
  WSGIScriptAlias / {{ wsgi_conf }}
 </VirtualHost>

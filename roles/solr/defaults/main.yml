@@ -2,5 +2,5 @@
 solr_home: /usr/local/
 solr_version: 4.5.1
 solr_url: "http://archive.apache.org/dist/lucene/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz"
-solr_logrotate_keep: 4
-solr_logrotate_frequency: weekly
+solr_logrotate_keep: 28
+solr_logrotate_frequency: daily

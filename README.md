@@ -1,3 +1,6 @@
+# Archived 8.8.2024
+META-SHARE is replaced by COMEDI, see http://urn.fi/urn:nbn:fi:lb-2021101104
+
 # META-SHARE
 
 Ansible script, to install a slightly customized version of META-SHARE (https://github.com/CSCfi/META-SHARE/) to a cPouta VM.
